@@ -3,11 +3,13 @@
 # Documentation
 #   https://www.glowscript.org/docs/VPythonDocs/index.html
 
+# VPython for Beginners
+#   https://www.youtube.com/playlist?list=PLdCdV2GBGyXOnMaPS1BgO7IOU_00ApuMo
 
 # Draw a 4 x 4 x 4 cube
 
 from vpython import *
-from vpython.no_notebook import stop_server
+# from vpython.no_notebook import stop_server
 import os
 import signal
 
@@ -24,10 +26,10 @@ def shutdown(keyup_event):
 
 def showSphere(evt):
     loc = evt.pos
-    sphere(pos=loc, radius=0.2, color=color.cyan)
+    sphere(pos=loc, radius=0.1, color=color.green)
 
 
-def define_boxes():
+def define_boxes_lights():
     list_box = []
     for x in range(4):
         list_box.append([])
@@ -35,14 +37,14 @@ def define_boxes():
             list_box[x].append([])
             for z in range(4):
                 list_box[x][y].append(
-                    box
-                    (
+                    box(
                         pos=vector(x-1.5, y-1.5, z-1.5),
                         size=vector(0.5, 0.5, 0.5),
                         color=color.gray(1),
-                        opacity=0.1
+                        opacity=0.1,
                     )
                 )
+
     return list_box
 
 
@@ -63,8 +65,12 @@ def get_coordinates_box():
 
 def select_box():
     boxes[x][y][z].color = color.cyan
-    boxes[x][y][z].opacity = 0.2
+    boxes[x][y][z].opacity = 0.5
 
+
+# SELECT A BOX By MOUSE CLICK
+#   https://www.glowscript.org/docs/VPythonDocs/mouse.html
+#   scene.mouse.pick
 
 scene = canvas(title='3D Cube', width=600, height=600)
 scene.bind('keyup', shutdown)
@@ -82,7 +88,7 @@ x = y = 0
 z = -1
 select = True
 
-boxes = define_boxes()
+boxes = define_boxes_lights()
 
 
 # print(scene.camera.pos)
