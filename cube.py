@@ -29,7 +29,7 @@ def showSphere(evt):
     sphere(pos=loc, radius=0.1, color=color.green)
 
 
-def define_boxes_lights():
+def define_boxes():
     list_box = []
     for x in range(4):
         list_box.append([])
@@ -42,9 +42,9 @@ def define_boxes_lights():
                         size=vector(0.5, 0.5, 0.5),
                         color=color.gray(1),
                         opacity=0.1,
+                        spin=False,
                     )
                 )
-
     return list_box
 
 
@@ -66,6 +66,15 @@ def get_coordinates_box():
 def select_box():
     boxes[x][y][z].color = color.cyan
     boxes[x][y][z].opacity = 0.5
+    boxes[x][y][z].spin = True
+
+
+def spin_box(angle):
+    for a in range(4):
+        for b in range(4):
+            for c in range(4):
+                if boxes[a][b][c].spin:
+                    boxes[a][b][c].rotate(angle=angle, axis=vec(0, 1, 0))
 
 
 # SELECT A BOX By MOUSE CLICK
@@ -74,8 +83,7 @@ def select_box():
 
 scene = canvas(title='3D Cube', width=600, height=600)
 scene.bind('keyup', shutdown)
-scene.bind('click', showSphere)
-scene.waitfor("draw_complete")
+# scene.bind('click', showSphere)
 
 # For camera angle motion
 theta = 0
@@ -88,12 +96,17 @@ x = y = 0
 z = -1
 select = True
 
-boxes = define_boxes_lights()
+# For box rotation
+phi = 0
+d_phi = 0.02
+
+boxes = define_boxes()
 
 
 # print(scene.camera.pos)
 # print(scene.camera.axis)
 
+scene.waitfor("draw_complete")
 running = True
 
 while running:
@@ -109,3 +122,5 @@ while running:
             select = get_coordinates_box()
             if select:
                 select_box()
+    spin_box(d_phi)
+    # phi += d_phi
