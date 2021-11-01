@@ -1,42 +1,74 @@
 #!.\venv_9\Scripts\python.exe
 
-# Documentation
-#   https://www.glowscript.org/docs/VPythonDocs/index.html
+"""
+    A program to draw a 4 x 4 x 4 cube of boxes
+    The mouse can be used to select a box by left clicking on it.
 
-# VPython for Beginners
-#   https://www.youtube.com/playlist?list=PLdCdV2GBGyXOnMaPS1BgO7IOU_00ApuMo
+    Documentation
+      https://www.glowscript.org/docs/VPythonDocs/index.html
 
-# Draw a 4 x 4 x 4 cube
+    VPython for Beginners
+      https://www.youtube.com/playlist?list=PLdCdV2GBGyXOnMaPS1BgO7IOU_00ApuMo
+
+    Rotate the camera view: drag with the right mouse button (or Ctrl-drag left button).
+    Zoom: drag with left and right mouse buttons (or Alt/Option-drag or scroll wheel).
+    Pan: Shift-drag.
+    Touch screen: swipe or two-finger rotate; pinch/extend to zoom.
+
+    VPython Axis orientation
+              | +y
+              |
+              |
+              |
+              |          +x
+              +------------
+             /
+            /
+        +z /
+"""
 
 from vpython import *
 # from vpython.no_notebook import stop_server
 import os
 import signal
 
+# CONSTANTS
+
+# Cube Dimensions
+X = 4
+Y = 4
+Z = 4
+
+# Angle of box rotation (radians) per 1/30 second
+phi = 0.02
+
 
 def shutdown(keyup_event):
+    """
+    Close the browser window and stop all HTTP server processes when the 'x' key is pressed
+    """
     if keyup_event.key == 'x':
         print('You pressed "x"')
+        # Stop the game loop
         global running
         running = False
+        # Kill all HTTP server processes
         # See https://github.com/BruceSherwood/vpython-jupyter/issues/148
         # stop_server()  # RuntimeError: Event loop is closed
         os.kill(os.getpid(), signal.SIGINT)
 
 
-def showSphere(evt):
-    loc = evt.pos
-    sphere(pos=loc, radius=0.1, color=color.green)
-
-
-def define_boxes():
-    list_box = []
-    for x in range(4):
-        list_box.append([])
-        for y in range(4):
-            list_box[x].append([])
-            for z in range(4):
-                list_box[x][y].append(
+def define_boxes(a: int, b: int, c: int):
+    """
+    Create a 3D array of boxes
+    """
+    array_boxes = []
+    for x in range(a):
+        array_boxes.append([])
+        for y in range(b):
+            array_boxes[x].append([])
+            for z in range(c):
+                array_boxes[x][y].append(
                     box(
                         pos=vector(x-1.5, y-1.5, z-1.5),
                         size=vector(0.5, 0.5, 0.5),
@@ -45,82 +77,62 @@ def define_boxes():
                         spin=False,
                     )
                 )
-    return list_box
+    return array_boxes
 
 
-def get_coordinates_box():
-    global x, y, z
-    z += 1
-    if z > 3:
-        z = 0
-        y += 1
-        if y > 3:
-            y = 0
-            x += 1
-            if x > 3:
-                return False
-    print(x, y, z)
-    return True
+def get_object():
+    """
+    Select the object under the mouse cursor when left-clicked
+    https://www.glowscript.org/docs/VPythonDocs/mouse.html
+    """
+    obj = scene.mouse.pick
+    for a in range(X):
+        for b in range(Y):
+            for c in range(Z):
+                if boxes[a][b][c] == obj:
+                    select_box(a, b, c)
+                    return
 
 
-def select_box():
-    boxes[x][y][z].color = color.cyan
-    boxes[x][y][z].opacity = 0.5
-    boxes[x][y][z].spin = True
+def select_box(a: int, b: int, c: int):
+    """
+    Set the attributes for the selected box
+    """
+    boxes[a][b][c].color = color.cyan
+    boxes[a][b][c].opacity = 0.5
+    boxes[a][b][c].spin = True
 
 
 def spin_box(angle):
-    for a in range(4):
-        for b in range(4):
-            for c in range(4):
+    """
+    Rotate the selected box if the spin attribute is True
+
+    :param angle: angle to rotate - radians
+    :return: nothing
+    """
+    for a in range(X):
+        for b in range(Y):
+            for c in range(Z):
                 if boxes[a][b][c].spin:
                     boxes[a][b][c].rotate(angle=angle, axis=vec(0, 1, 0))
 
 
-# SELECT A BOX By MOUSE CLICK
-#   https://www.glowscript.org/docs/VPythonDocs/mouse.html
-#   scene.mouse.pick
-
+# Define the canvas
 scene = canvas(title='3D Cube', width=600, height=600)
+
+# Keyboard and mouse bindings
 scene.bind('keyup', shutdown)
-# scene.bind('click', showSphere)
+scene.bind('click', get_object)
 
-# For camera angle motion
-theta = 0
-d_theta = 0.05
+# Create a cube of boxes
+boxes = define_boxes(X, Y, Z)
 
-# For selecting boxes
-d_time = 0.033
-time = 0
-x = y = 0
-z = -1
-select = True
-
-# For box rotation
-phi = 0
-d_phi = 0.02
-
-boxes = define_boxes()
-
-
-# print(scene.camera.pos)
-# print(scene.camera.axis)
-
+# Wait for the browser to open and render the page
 scene.waitfor("draw_complete")
+
+# Game loop
 running = True
-
 while running:
-    rate(30)
-    # scene.camera.pos = vector(2 * cos(theta), 2 * sin(theta), 6)
-    # scene.camera.axis = vector(2 * cos(theta), 2 * sin(theta), -10)
-    # theta += d_theta
-
-    if select:
-        time += d_time
-        if time > 1:
-            time = 0
-            select = get_coordinates_box()
-            if select:
-                select_box()
-    spin_box(d_phi)
-    # phi += d_phi
+    rate(30)  # Update 30 times per second
+    # Spin all selected boxes
+    spin_box(phi)
